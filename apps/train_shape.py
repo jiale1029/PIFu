@@ -4,6 +4,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+import pickle
 import time
 import json
 import numpy as np
@@ -11,6 +12,7 @@ import cv2
 import random
 import torch
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from lib.options import BaseOptions
@@ -23,8 +25,10 @@ from lib.geometry import index
 
 # get options
 opt = BaseOptions().parse()
+# init tensorboard
+writer = SummaryWriter()
 
-def train(opt):
+def train(opt, writer):
     # set cuda
     cuda = torch.device('cuda:%d' % opt.gpu_id)
 
@@ -81,11 +85,15 @@ def train(opt):
         outfile.write(json.dumps(vars(opt), indent=2))
 
     # training
+    stats = {}
+    stats['train_losses'] = []
+    stats['test_losses'] = []
     start_epoch = 0 if not opt.continue_train else max(opt.resume_epoch,0)
     for epoch in range(start_epoch, opt.num_epoch):
         epoch_start_time = time.time()
 
         set_train()
+        train_loss = 0
         iter_data_time = time.time()
         for train_idx, train_data in enumerate(train_data_loader):
             iter_start_time = time.time()
@@ -103,6 +111,7 @@ def train(opt):
             label_tensor = train_data['labels'].to(device=cuda)
 
             res, error = netG.forward(image_tensor, sample_tensor, calib_tensor, labels=label_tensor)
+            train_loss += error.item()
 
             optimizerG.zero_grad()
             error.backward()
@@ -131,6 +140,8 @@ def train(opt):
                 save_samples_truncted_prob(save_path, points.detach().numpy(), r.detach().numpy())
 
             iter_data_time = time.time()
+        writer.add_scalar("loss/train", train_loss/len(train_data_loader), epoch)
+        stats['train_losses'].append(train_loss/len(train_data_loader))
 
         # update learning rate
         lr = adjust_learning_rate(optimizerG, epoch, lr, opt.schedule, opt.gamma)
@@ -149,6 +160,10 @@ def train(opt):
                 test_losses['IOU(test)'] = IOU
                 test_losses['prec(test)'] = prec
                 test_losses['recall(test)'] = recall
+                writer.add_scalar("mse/test", MSE, epoch)
+                writer.add_scalar("iou/test", IOU, epoch)
+                writer.add_scalar("prec/test", prec, epoch)
+                writer.add_scalar("recall/test", recall, epoch)
 
                 print('calc error (train) ...')
                 train_dataset.is_train = False
@@ -160,6 +175,12 @@ def train(opt):
                 test_losses['IOU(train)'] = IOU
                 test_losses['prec(train)'] = prec
                 test_losses['recall(train)'] = recall
+                writer.add_scalar("mse/train", MSE, epoch)
+                writer.add_scalar("iou/train", IOU, epoch)
+                writer.add_scalar("prec/train", prec, epoch)
+                writer.add_scalar("recall/train", recall, epoch)
+
+                stats['test_losses'].append(test_losses)
 
             if not opt.no_gen_mesh:
                 print('generate mesh (test) ...')
@@ -178,6 +199,10 @@ def train(opt):
                     gen_mesh(opt, netG, cuda, train_data, save_path)
                 train_dataset.is_train = True
 
+        print("Storing stats...")
+        with open("./results/loss_result.pkl", "wb") as f:
+            pickle.dump(stats, f)
 
 if __name__ == '__main__':
-    train(opt)
+    train(opt, writer)
+    writer.close()
