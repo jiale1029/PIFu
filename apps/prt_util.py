@@ -159,10 +159,10 @@ def computePRT(mesh_path, n, order):
 def testPRT(dir_path, type, n=40):
     if dir_path[-1] == "/":
         dir_path = dir_path[:-1]
-    if type == "renderpeople":
+    if type == "rp":
         sub_name = dir_path.split("/")[-1][:-4]
         obj_path = os.path.join(dir_path, sub_name + "_100k.obj")
-    elif type == "":
+    elif type == "twindom":
         for file in os.listdir(dir_path):
             if ".obj" in file:
                 obj_file = file
@@ -190,9 +190,7 @@ if __name__ == "__main__":
         default=40,
         help="squared root of number of sampling. the higher, the more accurate, but slower",
     )
-    parser.add_argument(
-        "-t", "--type", type=str, default="renderpeople", help="type of dataset"
-    )
+    parser.add_argument("-t", "--type", type=str, default="rp", help="type of dataset")
     args = parser.parse_args()
 
     testPRT(args.input, args.type)
