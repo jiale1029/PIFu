@@ -163,10 +163,17 @@ def testPRT(dir_path, type, n=40):
         sub_name = dir_path.split("/")[-1][:-4]
         obj_path = os.path.join(dir_path, sub_name + "_100k.obj")
     elif type == "twindom":
+
         for file in os.listdir(dir_path):
             if ".obj" in file:
                 obj_file = file
+                prefix = obj_file.split(".obj")[0]
                 break
+
+        for file in os.listdir(dir_path):
+            if prefix not in file:
+                raise ValueError(f"Invalid prefix type for file {file}")
+
         obj_path = os.path.join(dir_path, obj_file)
     os.makedirs(os.path.join(dir_path, "bounce"), exist_ok=True)
 
