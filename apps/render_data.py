@@ -20,6 +20,7 @@ from tqdm import tqdm
 
 
 def make_rotate(rx, ry, rz):
+
     sinX = np.sin(rx)
     sinY = np.sin(ry)
     sinZ = np.sin(rz)
@@ -174,8 +175,15 @@ def render_prt_ortho(
     # set path for obj, prt
     if type == "rp":
         mesh_file = os.path.join(folder_name, subject_name + "_100k.obj")
+        text_file = os.path.join(folder_name, "tex", subject_name + "_dif_2k.jpg")
     elif type == "twindom":
         mesh_file = os.path.join(folder_name, subject_name + ".obj")
+        for file in os.listdir(folder_name):
+            if ".png" in file:
+                text_name = file
+                break
+        text_file = os.path.join(folder_name, text_name)
+
     if not os.path.exists(mesh_file):
         print("ERROR: obj file does not exist!!", mesh_file)
         return
@@ -187,7 +195,7 @@ def render_prt_ortho(
     if not os.path.exists(face_prt_file):
         print("ERROR: face prt file does not exist!!!", prt_file)
         return
-    text_file = os.path.join(folder_name, "tex", subject_name + "_dif_2k.jpg")
+
     if not os.path.exists(text_file):
         print("ERROR: dif file does not exist!!", text_file)
         return
