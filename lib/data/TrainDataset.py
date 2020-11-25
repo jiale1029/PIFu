@@ -117,7 +117,9 @@ class TrainDataset(Dataset):
 
     def get_subjects(self):
         all_subjects = os.listdir(self.RENDER)
-        var_subjects = np.loadtxt(os.path.join(self.root, "val.txt"), dtype=str)
+        var_subjects = np.atleast_1d(
+            np.loadtxt(os.path.join(self.root, "val.txt"), dtype=str)
+        )
         if len(var_subjects) == 0:
             return all_subjects
 
