@@ -9,9 +9,10 @@ TRAINING_DATA_PATH="/home/tanjiale/PIFu/data/training_data"
 BATCH_SIZE=4
 NUM_EPOCH=250
 LR=0.001
+CUDA_VISIBLE_DEVICES=${GPU_ID}
 
 # command
-CUDA_VISIBLE_DEVICES=${GPU_ID} python -m apps.train_shape \
+python -m apps.train_shape \
     --dataroot ${TRAINING_DATA_PATH} \
     --batch_size ${BATCH_SIZE} \
     --num_epoch ${NUM_EPOCH} \
