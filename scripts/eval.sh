@@ -4,7 +4,7 @@ set -ex
 # Training
 GPU_ID=1
 DISPLAY_ID=$((GPU_ID*10+10))
-NAME='.'
+NAME='TWINDOM'
 
 # Network configuration
 
@@ -16,11 +16,11 @@ MLP_DIM_COLOR='513 1024 512 256 128 3'
 # NOTE: one can change here to reconstruct mesh in a different resolution.
 VOL_RES=256
 
-CHECKPOINTS_NETG_PATH='./checkpoints/TWINDOM/netG_latest'
-CHECKPOINTS_NETC_PATH='./checkpoints/TWINDOM/netC_latest'
+CHECKPOINTS_NETG_PATH="./checkpoints/${NAME}/netG_latest"
+CHECKPOINTS_NETC_PATH="./checkpoints/${NAME}/netC_latest"
 
-TEST_FOLDER_PATH='./eval/eval_image'
-RESULT_FOLDER_PATH='./eval/eval_result'
+TEST_FOLDER_PATH="./eval/image"
+RESULT_FOLDER_PATH="./eval/result"
 temp="--norm_color 'group'"
 
 # command
