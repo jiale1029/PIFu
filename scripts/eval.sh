@@ -2,7 +2,7 @@
 set -ex
 
 # Training
-GPU_ID=0
+GPU_ID=1
 DISPLAY_ID=$((GPU_ID*10+10))
 NAME='.'
 
@@ -16,8 +16,8 @@ MLP_DIM_COLOR='513 1024 512 256 128 3'
 # NOTE: one can change here to reconstruct mesh in a different resolution.
 VOL_RES=256
 
-CHECKPOINTS_NETG_PATH='./checkpoints/net_G_250'
-CHECKPOINTS_NETC_PATH='./checkpoints/net_C_eval'
+CHECKPOINTS_NETG_PATH='./checkpoints/TWINDOM/netG_latest'
+CHECKPOINTS_NETC_PATH='./checkpoints/TWINDOM/netC_latest'
 
 TEST_FOLDER_PATH='./eval/eval_image'
 RESULT_FOLDER_PATH='./eval/eval_result'
@@ -34,6 +34,7 @@ CUDA_VISIBLE_DEVICES=${GPU_ID} python ./apps/eval.py \
     --resolution ${VOL_RES} \
     --hg_down 'ave_pool' \
     --norm 'group' \
+    --norm_color 'group' \
     --test_folder_path ${TEST_FOLDER_PATH} \
     --results_path ${RESULT_FOLDER_PATH} \
     --load_netG_checkpoint_path ${CHECKPOINTS_NETG_PATH} \
