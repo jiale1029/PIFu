@@ -175,7 +175,8 @@ def render_prt_ortho(
     # set path for obj, prt
     if type == "rp":
         mesh_file = os.path.join(folder_name, subject_name + "_100k.obj")
-        text_file = os.path.join(folder_name, "tex", subject_name + "_dif_2k.jpg")
+        text_file = os.path.join(
+            folder_name, "tex", subject_name + "_dif_2k.jpg")
     elif type == "twindom":
         mesh_file = os.path.join(folder_name, subject_name + ".obj")
         for file in os.listdir(folder_name):
@@ -183,6 +184,9 @@ def render_prt_ortho(
                 text_name = file
                 break
         text_file = os.path.join(folder_name, text_name)
+    elif type == "nba":
+        # all files has 0_person.obj
+        mesh_file = os.path.join(folder_name, "0_person.obj")
 
     if not os.path.exists(mesh_file):
         print("ERROR: obj file does not exist!!", mesh_file)
@@ -203,14 +207,24 @@ def render_prt_ortho(
     texture_image = cv2.imread(text_file)
     texture_image = cv2.cvtColor(texture_image, cv2.COLOR_BGR2RGB)
 
-    (
-        vertices,
-        faces,
-        normals,
-        faces_normals,
-        textures,
-        face_textures,
-    ) = load_obj_mesh(mesh_file, with_normal=True, with_texture=True)
+    if type == "rp" or type == "twindom":
+        (
+            vertices,
+            faces,
+            normals,
+            faces_normals,
+            textures,
+            face_textures,
+        ) = load_obj_mesh(mesh_file, with_normal=True, with_texture=True)
+    elif type == "nba":
+        (
+            vertices,
+            faces,
+            normals,
+            faces_normals,
+            textures,
+            face_textures,
+        ) = load_obj_mesh_mtl(mesh_file)
 
     vmin = vertices.min(0)
     vmax = vertices.max(0)
@@ -223,7 +237,8 @@ def render_prt_ortho(
     rndr.set_norm_mat(y_scale, vmed)
     rndr_uv.set_norm_mat(y_scale, vmed)
 
-    tan, bitan = compute_tangent(vertices, faces, normals, textures, face_textures)
+    tan, bitan = compute_tangent(
+        vertices, faces, normals, textures, face_textures)
     prt = np.loadtxt(prt_file)
     face_prt = np.load(face_prt_file)
     rndr.set_mesh(
@@ -254,28 +269,41 @@ def render_prt_ortho(
     )
     rndr_uv.set_albedo(texture_image)
 
-    os.makedirs(os.path.join(out_path, "GEO", "OBJ", subject_name), exist_ok=True)
+    os.makedirs(os.path.join(out_path, "GEO",
+                             "OBJ", subject_name), exist_ok=True)
     os.makedirs(os.path.join(out_path, "PARAM", subject_name), exist_ok=True)
     os.makedirs(os.path.join(out_path, "RENDER", subject_name), exist_ok=True)
     os.makedirs(os.path.join(out_path, "MASK", subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, "UV_RENDER", subject_name), exist_ok=True)
+    os.makedirs(os.path.join(out_path, "UV_RENDER",
+                             subject_name), exist_ok=True)
     os.makedirs(os.path.join(out_path, "UV_MASK", subject_name), exist_ok=True)
     os.makedirs(os.path.join(out_path, "UV_POS", subject_name), exist_ok=True)
-    os.makedirs(os.path.join(out_path, "UV_NORMAL", subject_name), exist_ok=True)
+    os.makedirs(os.path.join(out_path, "UV_NORMAL",
+                             subject_name), exist_ok=True)
 
     if not os.path.exists(os.path.join(out_path, "val.txt")):
         f = open(os.path.join(out_path, "val.txt"), "w")
         f.close()
 
     # copy obj file
-    cmd = "cp %s %s" % (mesh_file, os.path.join(out_path, "GEO", "OBJ", subject_name))
+    cmd = "cp %s %s" % (mesh_file, os.path.join(
+        out_path, "GEO", "OBJ", subject_name))
     print(cmd)
     os.system(cmd)
+
+    if type == "nba":
+        # rename 0_person.obj to subject name
+        src_path = os.path.join(
+            out_path, "GEO", "OBJ", subject_name, "0_person.obj")
+        dest_path = src_path.replace("0_person", subject_name)
+        cmd = f"mv {src_path} {dest_path}"
+        os.system(cmd)
 
     for p in pitch:
         for y in tqdm(range(0, 360, angl_step)):
             R = np.matmul(
-                make_rotate(math.radians(p), 0, 0), make_rotate(0, math.radians(y), 0)
+                make_rotate(math.radians(p), 0, 0), make_rotate(
+                    0, math.radians(y), 0)
             )
             if up_axis == 2:
                 R = np.matmul(R, make_rotate(math.radians(90), 0, 0))
@@ -310,19 +338,22 @@ def render_prt_ortho(
 
                 np.save(
                     os.path.join(
-                        out_path, "PARAM", subject_name, "%d_%d_%02d.npy" % (y, p, j)
+                        out_path, "PARAM", subject_name, "%d_%d_%02d.npy" % (
+                            y, p, j)
                     ),
                     dic,
                 )
                 cv2.imwrite(
                     os.path.join(
-                        out_path, "RENDER", subject_name, "%d_%d_%02d.jpg" % (y, p, j)
+                        out_path, "RENDER", subject_name, "%d_%d_%02d.jpg" % (
+                            y, p, j)
                     ),
                     255.0 * out_all_f,
                 )
                 cv2.imwrite(
                     os.path.join(
-                        out_path, "MASK", subject_name, "%d_%d_%02d.png" % (y, p, j)
+                        out_path, "MASK", subject_name, "%d_%d_%02d.png" % (
+                            y, p, j)
                     ),
                     255.0 * out_mask,
                 )
@@ -348,19 +379,23 @@ def render_prt_ortho(
                     uv_pos = rndr_uv.get_color(1)
                     uv_mask = uv_pos[:, :, 3]
                     cv2.imwrite(
-                        os.path.join(out_path, "UV_MASK", subject_name, "00.png"),
+                        os.path.join(out_path, "UV_MASK",
+                                     subject_name, "00.png"),
                         255.0 * uv_mask,
                     )
 
-                    data = {"default": uv_pos[:, :, :3]}  # default is a reserved name
+                    # default is a reserved name
+                    data = {"default": uv_pos[:, :, :3]}
                     pyexr.write(
-                        os.path.join(out_path, "UV_POS", subject_name, "00.exr"), data
+                        os.path.join(out_path, "UV_POS",
+                                     subject_name, "00.exr"), data
                     )
 
                     uv_nml = rndr_uv.get_color(2)
                     uv_nml = cv2.cvtColor(uv_nml, cv2.COLOR_RGBA2BGR)
                     cv2.imwrite(
-                        os.path.join(out_path, "UV_NORMAL", subject_name, "00.png"),
+                        os.path.join(out_path, "UV_NORMAL",
+                                     subject_name, "00.png"),
                         255.0 * uv_nml,
                     )
 
@@ -369,12 +404,8 @@ if __name__ == "__main__":
     shs = np.load("./env_sh.npy")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-i",
-        "--input",
-        type=str,
-        default="/home/shunsuke/Downloads/rp_dennis_posed_004_OBJ",
-    )
+    parser.add_argument("-i", "--input", type=str,
+                        default="/home/shunsuke/Downloads/rp_dennis_posed_004_OBJ")
     parser.add_argument(
         "-o", "--out_dir", type=str, default="/home/shunsuke/Documents/hf_human"
     )
@@ -394,7 +425,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s", "--size", type=int, default=512, help="rendering image size"
     )
-    parser.add_argument("-t", "--type", type=str, default="rp", help="type of dataset")
+    parser.add_argument("-t", "--type", type=str,
+                        default="rp", help="type of dataset")
     args = parser.parse_args()
 
     # NOTE: GL context has to be created before any other OpenGL function loads.
@@ -407,10 +439,15 @@ if __name__ == "__main__":
     rndr = PRTRender(
         width=args.size, height=args.size, ms_rate=args.ms_rate, egl=args.egl
     )
-    rndr_uv = PRTRender(width=args.size, height=args.size, uv_mode=True, egl=args.egl)
+    rndr_uv = PRTRender(width=args.size, height=args.size,
+                        uv_mode=True, egl=args.egl)
 
     if args.input[-1] == "/":
         args.input = args.input[:-1]
+
+    """
+        Check for dataset type
+    """
     if args.type == "rp":
         subject_name = args.input.split("/")[-1][:-4]
     elif args.type == "twindom":
@@ -419,6 +456,12 @@ if __name__ == "__main__":
                 obj_file = file
                 subject_name = obj_file.split(".obj")[0]
                 break
+    elif args.type == "nba":
+        input = args.input
+        player_name = input.split("/")[-4]
+        frame_type = input.split("/")[-3]
+        frame = input.split("/")[-2]
+        subject_name = player_name + "_" + frame_type + "_" + frame
 
     render_prt_ortho(
         args.out_dir,
@@ -433,4 +476,3 @@ if __name__ == "__main__":
         1,
         pitch=[0],
     )
-

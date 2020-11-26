@@ -188,11 +188,7 @@ def testPRT(dir_path, type, n=40):
                 raise ValueError(f"Invalid prefix type for file {file}")
         obj_path = os.path.join(dir_path, obj_file)
     elif type == "nba":
-        if "2ku" in dir_path:
-            sub_name = "2ku_" + dir_path.split("/")[-2]
-            obj_path = os.path.join(dir_path, "0_person.obj")
-        elif "rest_pose" in dir_path:
-            sub_name = "restpose_" + dir_path.split("/")[-2]
+        if "2ku" in dir_path or "rest_pose" in dir_path:
             obj_path = os.path.join(dir_path, "0_person.obj")
         else:
             # need to handle the case where some have multiple players

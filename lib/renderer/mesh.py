@@ -215,8 +215,16 @@ def load_obj_mesh_mtl(mesh_file):
     faces = np.array(face_data)
 
     norms = np.array(norm_data)
-    norms = normalize_v3(norms)
-    face_normals = np.array(face_norm_data)
+    if norms.shape[0] == 0:
+        norms = compute_normal(vertices, faces)
+        face_normals = faces
+    else:
+        norms = normalize_v3(norms)
+        face_normals = np.array(face_norm_data) - 1
+
+    # norms = np.array(norm_data)
+    # norms = normalize_v3(norms)
+    # face_normals = np.array(face_norm_data)
 
     uvs = np.array(uv_data)
     face_uvs = np.array(face_uv_data)
@@ -229,7 +237,8 @@ def load_obj_mesh_mtl(mesh_file):
             face_uv_data_mat[key] = np.array(face_uv_data_mat[key])
             face_norm_data_mat[key] = np.array(face_norm_data_mat[key])
 
-        out_tuple += (face_data_mat, face_norm_data_mat, face_uv_data_mat, mtl_data)
+        out_tuple += (face_data_mat, face_norm_data_mat,
+                      face_uv_data_mat, mtl_data)
 
     return out_tuple
 
