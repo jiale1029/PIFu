@@ -117,11 +117,11 @@ def computePRT(mesh_path, n, order):
     normals = np.repeat(normals[:, None], n, axis=1).reshape(-1, 3)
     PRT_all = None
     for i in tqdm(range(n)):
-        SH = np.repeat(SH_orig[None, (i * n) : ((i + 1) * n)], n_v, axis=0).reshape(
+        SH = np.repeat(SH_orig[None, (i * n): ((i + 1) * n)], n_v, axis=0).reshape(
             -1, SH_orig.shape[1]
         )
         vectors = np.repeat(
-            vectors_orig[None, (i * n) : ((i + 1) * n)], n_v, axis=0
+            vectors_orig[None, (i * n): ((i + 1) * n)], n_v, axis=0
         ).reshape(-1, 3)
 
         dots = (vectors * normals).sum(1)
@@ -153,6 +153,20 @@ def computePRT(mesh_path, n, order):
     directory: M1, M2, etc
     - contains .mtl, .obj, .png
     https://web.twindom.com/human-3d-body-scan-dataset-for-research-from-3d-scans/
+
+-nba2k dataset
+    e.g.
+    cedric
+    |
+    |____ 2ku --> frame_count --> players --> .obj + .obj.mtl (single player)
+    |
+    |____ normal --> frame_count --> players --> .obj + .obj.mtl (multiple players)
+    |
+    |____ rest_pose --> single frame_count --> .obj + .obj.mtl (single player)
+    |
+    |____ texture --> .png files for textures (e.g. arm, eye, hair, hair...)
+    |
+    |____ resampled --> not used in our case since it doesn't have hairs etc
 """
 
 
@@ -163,22 +177,32 @@ def testPRT(dir_path, type, n=40):
         sub_name = dir_path.split("/")[-1][:-4]
         obj_path = os.path.join(dir_path, sub_name + "_100k.obj")
     elif type == "twindom":
-
         for file in os.listdir(dir_path):
             if ".obj" in file:
                 obj_file = file
                 prefix = obj_file.split(".obj")[0]
                 break
-
         for file in os.listdir(dir_path):
+            # twindom dataset doesn't have matching png file sometimes
             if prefix not in file:
                 raise ValueError(f"Invalid prefix type for file {file}")
-
         obj_path = os.path.join(dir_path, obj_file)
+    elif type == "nba":
+        if "2ku" in dir_path:
+            sub_name = "2ku_" + dir_path.split("/")[-2]
+            obj_path = os.path.join(dir_path, "0_person.obj")
+        elif "rest_pose" in dir_path:
+            sub_name = "restpose_" + dir_path.split("/")[-2]
+            obj_path = os.path.join(dir_path, "0_person.obj")
+        else:
+            # need to handle the case where some have multiple players
+            raise TypeError("normal dataset for NBA is not supported yet.")
+
     os.makedirs(os.path.join(dir_path, "bounce"), exist_ok=True)
 
     PRT, F = computePRT(obj_path, n, 2)
-    np.savetxt(os.path.join(dir_path, "bounce", "bounce0.txt"), PRT, fmt="%.8f")
+    np.savetxt(os.path.join(dir_path, "bounce",
+                            "bounce0.txt"), PRT, fmt="%.8f")
     np.save(os.path.join(dir_path, "bounce", "face.npy"), F)
 
 
@@ -197,7 +221,8 @@ if __name__ == "__main__":
         default=40,
         help="squared root of number of sampling. the higher, the more accurate, but slower",
     )
-    parser.add_argument("-t", "--type", type=str, default="rp", help="type of dataset")
+    parser.add_argument("-t", "--type", type=str,
+                        default="rp", help="type of dataset")
     args = parser.parse_args()
 
     testPRT(args.input, args.type)
