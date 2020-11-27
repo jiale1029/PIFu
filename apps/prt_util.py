@@ -201,15 +201,16 @@ def testPRT(dir_path, type, n=40):
             )
             # frame texture directory (dest)
             frame_texture_dir = os.path.join(
-                "/".join(dir_path.split("/")[:-1]), "textures"
+                "/".join(dir_path.split("/")[:-2]), "textures"
             )
 
-            os.makedirs(frame_texture_dir, exist_ok=False)
-            for item in os.listdir(textures_dir):
-                shutil.copy2(
-                    os.path.join(textures_dir, item),
-                    os.path.join(frame_texture_dir, item)
-                )
+            # copy the file over if doesn't exist
+            if not os.makedirs(frame_texture_dir, exist_ok=True):
+                for item in os.listdir(textures_dir):
+                    shutil.copy2(
+                        os.path.join(textures_dir, item),
+                        os.path.join(frame_texture_dir, item)
+                    )
         else:
             # need to handle the case where some have multiple players
             raise TypeError("normal dataset for NBA is not supported yet.")
