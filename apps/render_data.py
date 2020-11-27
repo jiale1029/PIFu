@@ -208,24 +208,14 @@ def render_prt_ortho(
     texture_image = cv2.imread(text_file)
     texture_image = cv2.cvtColor(texture_image, cv2.COLOR_BGR2RGB)
 
-    if type == "rp" or type == "twindom":
-        (
-            vertices,
-            faces,
-            normals,
-            faces_normals,
-            textures,
-            face_textures,
-        ) = load_obj_mesh(mesh_file, with_normal=True, with_texture=True)
-    elif type == "nba":
-        (
-            vertices,
-            faces,
-            normals,
-            faces_normals,
-            textures,
-            face_textures,
-        ) = load_obj_mesh(mesh_file, with_normal=True, with_texture=True)
+    (
+        vertices,
+        faces,
+        normals,
+        faces_normals,
+        textures,
+        face_textures,
+    ) = load_obj_mesh(mesh_file, with_normal=True, with_texture=True)
 
     vmin = vertices.min(0)
     vmax = vertices.max(0)
