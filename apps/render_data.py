@@ -187,6 +187,7 @@ def render_prt_ortho(
     elif type == "nba":
         # all files has 0_person.obj
         mesh_file = os.path.join(folder_name, "0_person.obj")
+        text_file = os.path.join(folder_name, "..", "..", "head.png")
 
     if not os.path.exists(mesh_file):
         print("ERROR: obj file does not exist!!", mesh_file)
