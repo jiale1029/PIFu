@@ -201,7 +201,7 @@ def testPRT(dir_path, type, n=40):
             )
             # frame texture directory (dest)
             frame_texture_dir = os.path.join(
-                "/".join(dir_path.split("/")[:-1], "textures")
+                "/".join(dir_path.split("/")[:-1]), "textures"
             )
 
             os.makedirs(frame_texture_dir, exist_ok=False)
