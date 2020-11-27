@@ -1,9 +1,11 @@
 import os
+import shutil
+import math
+import argparse
+
 import trimesh
 import numpy as np
-import math
 from scipy.special import sph_harm
-import argparse
 from tqdm import tqdm
 
 
@@ -102,7 +104,7 @@ def getSHCoeffs(order, phi, theta):
     return np.stack(shs, 1)
 
 
-def computePRT(mesh_path, n, order):
+def computePRT(mesh_path, n, order, type="rp"):
     mesh = trimesh.load(mesh_path, process=False)
     vectors_orig, phi, theta = sampleSphericalDirections(n)
     SH_orig = getSHCoeffs(order, phi, theta)
@@ -188,8 +190,26 @@ def testPRT(dir_path, type, n=40):
                 raise ValueError(f"Invalid prefix type for file {file}")
         obj_path = os.path.join(dir_path, obj_file)
     elif type == "nba":
+        # copy textures to 2ku or rest_pose directory since mtl points to wrong directory now
+        # e.g. data/nba_dataset/mesh/release/cedric/rest_pose/NBA2K19_2020.05.27_21.05.46_frame49630/players
         if "2ku" in dir_path or "rest_pose" in dir_path:
             obj_path = os.path.join(dir_path, "0_person.obj")
+
+            # original texture directory (src)
+            textures_dir = os.path.join(
+                "/".join(dir_path.split("/")[:-3]), "textures"
+            )
+            # frame texture directory (dest)
+            frame_texture_dir = os.path.join(
+                "/".join(dir_path.split("/")[:-1], "textures")
+            )
+
+            os.makedirs(frame_texture_dir, exist_ok=False)
+            for item in os.listdir(textures_dir):
+                shutil.copy2(
+                    os.path.join(textures_dir, item),
+                    os.path.join(frame_texture_dir, item)
+                )
         else:
             # need to handle the case where some have multiple players
             raise TypeError("normal dataset for NBA is not supported yet.")
