@@ -225,7 +225,7 @@ def render_prt_ortho(
             faces_normals,
             textures,
             face_textures,
-        ) = load_obj_mesh_mtl(mesh_file)
+        ) = load_obj_mesh(mesh_file, with_normal=True, with_texture=True)
 
     vmin = vertices.min(0)
     vmax = vertices.max(0)
