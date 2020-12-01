@@ -220,7 +220,7 @@ def render_prt_ortho(
             face_data_mat,
             face_norm_data_mat,
             face_textures_data_mat,
-            mtl_data 
+            mtl_data
         ) = load_obj_mesh_mtl(mesh_file)
     else:
         (
@@ -269,6 +269,13 @@ def render_prt_ortho(
                 texture_image=texture_image,
                 mat_name=key
             )
+            cv2.imwrite(
+                os.path.join(
+                    out_path, "DEMO", subject_name, "%d_%d_%02d.jpg" % (
+                        y, p, j)
+                ),
+                255.0 * out_all_f,
+            )
     else:
         rndr.set_mesh(
             vertices,
@@ -296,6 +303,9 @@ def render_prt_ortho(
             bitans=bitan,
             prt=prt
         )
+        out_all_f = rndr.get_color(0)
+        out_mask = out_all_f[:, :, 3]
+        out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
         # set texture and their name
         for key in mtl_data:
             text_file = os.path.join(folder_name, mtl_data[key]['map_Kd'])
@@ -339,7 +349,7 @@ def render_prt_ortho(
     # copy obj file
     cmd = "cp %s %s" % (mesh_file, os.path.join(
         out_path, "GEO", "OBJ", subject_name))
-    #print(cmd)
+    # print(cmd)
     os.system(cmd)
 
     if type == "nba":
@@ -350,7 +360,9 @@ def render_prt_ortho(
         cmd = f"mv {src_path} {dest_path}"
         os.system(cmd)
 
+    # only a single pitch which is horizontal view
     for p in pitch:
+        # 360 degrees
         for y in tqdm(range(0, 360, angl_step)):
             R = np.matmul(
                 make_rotate(math.radians(p), 0, 0), make_rotate(
