@@ -158,19 +158,25 @@ class PRTRender(CamRender):
             glBindBuffer(GL_ARRAY_BUFFER, self.uv_buffer[key])
             glBufferData(GL_ARRAY_BUFFER, self.uv_data[key], GL_STATIC_DRAW)
 
-            self.norm_data[key] = norms[faces_nml[key].reshape([-1])]
+            self.norm_data[key] = np.asarray([])
+            if len(faces_nml[key].reshape([-1])):
+                self.norm_data[key] = norms[faces_nml[key].reshape([-1])]
             if key not in self.norm_buffer.keys():
                 self.norm_buffer[key] = glGenBuffers(1)
             glBindBuffer(GL_ARRAY_BUFFER, self.norm_buffer[key])
             glBufferData(GL_ARRAY_BUFFER, self.norm_data[key], GL_STATIC_DRAW)
 
-            self.tan_data[key] = tans[faces_nml[key].reshape([-1])]
+            self.tan_data[key] = np.asarray([])
+            if len(faces_nml[key].reshape([-1])):
+                self.tan_data[key] = tans[faces_nml[key].reshape([-1])]
             if key not in self.tan_buffer.keys():
                 self.tan_buffer[key] = glGenBuffers(1)
             glBindBuffer(GL_ARRAY_BUFFER, self.tan_buffer[key])
             glBufferData(GL_ARRAY_BUFFER, self.tan_data[key], GL_STATIC_DRAW)
 
-            self.btan_data[key] = bitans[faces_nml[key].reshape([-1])]
+            self.btan_data[key] = np.asarray([])
+            if len(faces_nml[key].reshape([-1])):
+                self.btan_data[key] = bitans[faces_nml[key].reshape([-1])]
             if key not in self.btan_buffer.keys():
                 self.btan_buffer[key] = glGenBuffers(1)
             glBindBuffer(GL_ARRAY_BUFFER, self.btan_buffer[key])
@@ -269,12 +275,12 @@ class PRTRender(CamRender):
         glUniformMatrix4fv(self.model_mat_unif, 1, GL_FALSE, self.model_view_matrix.transpose())
         glUniformMatrix4fv(self.persp_mat_unif, 1, GL_FALSE, self.projection_matrix.transpose())
 
-        if 'AlbedoMap' in self.render_texture_mat['all']:
+        if "all" in self.render_texture_mat and 'AlbedoMap' in self.render_texture_mat["all"]:
             glUniform1ui(self.hasAlbedoUnif, GLuint(1))
         else:
             glUniform1ui(self.hasAlbedoUnif, GLuint(0))
 
-        if 'NormalMap' in self.render_texture_mat['all']:
+        if "all" in self.render_texture_mat and 'NormalMap' in self.render_texture_mat["all"]:
             glUniform1ui(self.hasNormalUnif, GLuint(1))
         else:
             glUniform1ui(self.hasNormalUnif, GLuint(0))

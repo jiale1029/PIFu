@@ -14,7 +14,7 @@ class Render:
         self.name = name
         self.use_inverse_depth = False
         self.egl = egl
-        
+
         glEnable(GL_DEPTH_TEST)
 
         glClampColor(GL_CLAMP_READ_COLOR, GL_FALSE)

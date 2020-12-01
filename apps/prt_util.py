@@ -106,7 +106,7 @@ def getSHCoeffs(order, phi, theta):
 
 def computePRT(mesh_path, n, order, type="rp"):
     mesh = trimesh.load(mesh_path, process=False,
-                        force="mesh", skip_material=True)
+                        force="mesh", skip_materials=True)
     vectors_orig, phi, theta = sampleSphericalDirections(n)
     SH_orig = getSHCoeffs(order, phi, theta)
 

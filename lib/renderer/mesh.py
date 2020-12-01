@@ -236,6 +236,9 @@ def load_obj_mesh_mtl(mesh_file):
             face_data_mat[key] = np.array(face_data_mat[key])
             face_uv_data_mat[key] = np.array(face_uv_data_mat[key])
             face_norm_data_mat[key] = np.array(face_norm_data_mat[key])
+            
+            if face_norm_data_mat[key].shape[0] == 0:
+                face_norm_data_mat[key] = face_data_mat[key]
 
         out_tuple += (face_data_mat, face_norm_data_mat,
                       face_uv_data_mat, mtl_data)

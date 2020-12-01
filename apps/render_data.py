@@ -187,7 +187,8 @@ def render_prt_ortho(
     elif type == "nba":
         # all files has 0_person.obj
         mesh_file = os.path.join(folder_name, "0_person.obj")
-        text_file = os.path.join(folder_name, "..", "..", "textures/head.png")
+        # temporary text file path
+        text_file = os.path.join(folder_name, "..", "..", "textures/shirt.png")
 
     if not os.path.exists(mesh_file):
         print("ERROR: obj file does not exist!!", mesh_file)
@@ -208,19 +209,34 @@ def render_prt_ortho(
     texture_image = cv2.imread(text_file)
     texture_image = cv2.cvtColor(texture_image, cv2.COLOR_BGR2RGB)
 
-    (
-        vertices,
-        faces,
-        normals,
-        faces_normals,
-        textures,
-        face_textures,
-    ) = load_obj_mesh(mesh_file, with_normal=True, with_texture=True)
+    if type == "nba":
+        (
+            vertices,
+            faces,
+            normals,
+            faces_normals,
+            textures,
+            face_textures,
+            face_data_mat,
+            face_norm_data_mat,
+            face_textures_data_mat,
+            mtl_data 
+        ) = load_obj_mesh_mtl(mesh_file)
+    else:
+        (
+            vertices,
+            faces,
+            normals,
+            faces_normals,
+            textures,
+            face_textures,
+        ) = load_obj_mesh(mesh_file, with_normal=True, with_texture=True)
 
     vmin = vertices.min(0)
     vmax = vertices.max(0)
     up_axis = 1 if (vmax - vmin).argmax() == 1 else 2
 
+    # Calculate median and scale for normalization
     vmed = np.median(vertices, 0)
     vmed[up_axis] = 0.5 * (vmax[up_axis] + vmin[up_axis])
     y_scale = 180 / (vmax[up_axis] - vmin[up_axis])
@@ -232,33 +248,77 @@ def render_prt_ortho(
         vertices, faces, normals, textures, face_textures)
     prt = np.loadtxt(prt_file)
     face_prt = np.load(face_prt_file)
-    rndr.set_mesh(
-        vertices,
-        faces,
-        normals,
-        faces_normals,
-        textures,
-        face_textures,
-        prt,
-        face_prt,
-        tan,
-        bitan,
-    )
-    rndr.set_albedo(texture_image)
+    if type == "nba":
+        rndr.set_mesh_mtl(
+            vertices=vertices,
+            faces=face_data_mat,
+            norms=normals,
+            faces_nml=face_norm_data_mat,
+            uvs=textures,
+            faces_uvs=face_textures_data_mat,
+            tans=tan,
+            bitans=bitan,
+            prt=prt
+        )
+        # set texture and their name
+        for key in mtl_data:
+            text_file = os.path.join(folder_name, mtl_data[key]['map_Kd'])
+            texture_image = cv2.imread(text_file)
+            texture_image = cv2.cvtColor(texture_image, cv2.COLOR_BGR2RGB)
+            rndr.set_albedo(
+                texture_image=texture_image,
+                mat_name=key
+            )
+    else:
+        rndr.set_mesh(
+            vertices,
+            faces,
+            normals,
+            faces_normals,
+            textures,
+            face_textures,
+            prt,
+            face_prt,
+            tan,
+            bitan,
+        )
+        rndr.set_albedo(texture_image)
 
-    rndr_uv.set_mesh(
-        vertices,
-        faces,
-        normals,
-        faces_normals,
-        textures,
-        face_textures,
-        prt,
-        face_prt,
-        tan,
-        bitan,
-    )
-    rndr_uv.set_albedo(texture_image)
+    if type == "nba":
+        rndr_uv.set_mesh_mtl(
+            vertices=vertices,
+            faces=face_data_mat,
+            norms=normals,
+            faces_nml=face_norm_data_mat,
+            uvs=textures,
+            faces_uvs=face_textures_data_mat,
+            tans=tan,
+            bitans=bitan,
+            prt=prt
+        )
+        # set texture and their name
+        for key in mtl_data:
+            text_file = os.path.join(folder_name, mtl_data[key]['map_Kd'])
+            texture_image = cv2.imread(text_file)
+            texture_image = cv2.cvtColor(texture_image, cv2.COLOR_BGR2RGB)
+            rndr_uv.set_albedo(
+                texture_image=texture_image,
+                mat_name=key
+            )
+    else:
+        rndr_uv.set_mesh(
+            vertices,
+            faces,
+            normals,
+            faces_normals,
+            textures,
+            face_textures,
+            prt,
+            face_prt,
+            tan,
+            bitan,
+        )
+        rndr_uv.set_albedo(texture_image)
 
     os.makedirs(os.path.join(out_path, "GEO",
                              "OBJ", subject_name), exist_ok=True)
@@ -279,7 +339,7 @@ def render_prt_ortho(
     # copy obj file
     cmd = "cp %s %s" % (mesh_file, os.path.join(
         out_path, "GEO", "OBJ", subject_name))
-    print(cmd)
+    #print(cmd)
     os.system(cmd)
 
     if type == "nba":
