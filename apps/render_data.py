@@ -306,6 +306,12 @@ def render_prt_ortho(
         out_all_f = rndr.get_color(0)
         out_mask = out_all_f[:, :, 3]
         out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
+        cv2.imwrite(
+            os.path.join(
+                out_path, "RENDER", subject_name, "mesh.jpg"
+            ),
+            255.0 * out_all_f,
+        )
         # set texture and their name
         for key in mtl_data:
             text_file = os.path.join(folder_name, mtl_data[key]['map_Kd'])
