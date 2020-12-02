@@ -275,15 +275,18 @@ class PRTRender(CamRender):
         glUniformMatrix4fv(self.model_mat_unif, 1, GL_FALSE, self.model_view_matrix.transpose())
         glUniformMatrix4fv(self.persp_mat_unif, 1, GL_FALSE, self.projection_matrix.transpose())
 
-        if "all" in self.render_texture_mat and 'AlbedoMap' in self.render_texture_mat["all"]:
-            glUniform1ui(self.hasAlbedoUnif, GLuint(1))
-        else:
-            glUniform1ui(self.hasAlbedoUnif, GLuint(0))
+        for key in self.render_texture_mat:
+            if 'AlbedoMap' in self.render_texture_mat[key]:
+                glUniform1ui(self.hasAlbedoUnif, GLuint(1))
+                break
+            else:
+                glUniform1ui(self.hasAlbedoUnif, GLuint(0))
 
-        if "all" in self.render_texture_mat and 'NormalMap' in self.render_texture_mat["all"]:
-            glUniform1ui(self.hasNormalUnif, GLuint(1))
-        else:
-            glUniform1ui(self.hasNormalUnif, GLuint(0))
+        for key in self.render_texture_mat:
+            if 'NormalMap' in self.render_texture_mat[key]:
+                glUniform1ui(self.hasNormalUnif, GLuint(1))
+            else:
+                glUniform1ui(self.hasNormalUnif, GLuint(0))
 
         glUniform1ui(self.analyticUnif, GLuint(1) if self.analytic else GLuint(0))
 

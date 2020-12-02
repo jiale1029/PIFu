@@ -270,6 +270,7 @@ def render_prt_ortho(
                 mat_name=key
             )
     else:
+        print("setting mesh")
         rndr.set_mesh(
             vertices,
             faces,
@@ -282,6 +283,7 @@ def render_prt_ortho(
             tan,
             bitan,
         )
+        # rndr.set_albedo(np.ones_like(texture_image)*255)
         rndr.set_albedo(texture_image)
 
     if type == "nba":
@@ -295,15 +297,6 @@ def render_prt_ortho(
             tans=tan,
             bitans=bitan,
             prt=prt
-        )
-        out_all_f = rndr.get_color(0)
-        out_mask = out_all_f[:, :, 3]
-        out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
-        cv2.imwrite(
-            os.path.join(
-                out_path, "RENDER", subject_name, "mesh.jpg"
-            ),
-            255.0 * out_all_f,
         )
         # set texture and their name
         for key in mtl_data:
@@ -373,6 +366,15 @@ def render_prt_ortho(
             rndr.set_camera(cam)
             rndr_uv.set_camera(cam)
 
+            # out_all_f = rndr.get_color(0)
+            # out_mask = out_all_f[:, :, 3]
+            # out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
+            # cv2.imwrite(
+            #     os.path.join(
+            #         out_path, "RENDER", subject_name, "mesh.jpg"
+            #     ),
+            #     255.0 * out_all_f,
+            # )
             for j in range(n_light):
                 sh_id = random.randint(0, shs.shape[0] - 1)
                 sh = shs[sh_id]
