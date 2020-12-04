@@ -2,7 +2,6 @@ import os
 import shutil
 import math
 import argparse
-
 import trimesh
 import numpy as np
 from scipy.special import sph_harm
@@ -105,12 +104,25 @@ def getSHCoeffs(order, phi, theta):
 
 
 def computePRT(mesh_path, n, order, type="rp"):
-    mesh = trimesh.load(mesh_path, process=False,
-                        force="mesh", skip_materials=True)
+
     vectors_orig, phi, theta = sampleSphericalDirections(n)
     SH_orig = getSHCoeffs(order, phi, theta)
 
     w = 4.0 * math.pi / (n * n)
+
+    if type == "nba":
+        mesh = trimesh.load(
+            mesh_path,
+            process=False,
+            force="mesh",
+            skip_materials=True,
+            # maintain_order=True
+        )
+    else:
+        mesh = trimesh.load(
+                mesh_path,
+                process=False,
+            )
 
     origins = mesh.vertices
     normals = mesh.vertex_normals
@@ -218,7 +230,7 @@ def testPRT(dir_path, type, n=40):
 
     os.makedirs(os.path.join(dir_path, "bounce"), exist_ok=True)
 
-    PRT, F = computePRT(obj_path, n, 2)
+    PRT, F = computePRT(obj_path, n, 2, type)
     np.savetxt(os.path.join(dir_path, "bounce",
                             "bounce0.txt"), PRT, fmt="%.8f")
     np.save(os.path.join(dir_path, "bounce", "face.npy"), F)

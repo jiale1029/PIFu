@@ -141,8 +141,11 @@ class PRTRender(CamRender):
         
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-    def set_mesh_mtl(self, vertices, faces, norms, faces_nml, uvs, faces_uvs, tans, bitans, prt):
+    def set_mesh_mtl(self, vertices, faces, norms, faces_nml, uvs, faces_uvs, tans, bitans, prt, face_prt):
         for key in faces:
+            # retrieve the vertices that combines into each faces
+            # print("starts here")
+            # print(faces[key].shape)
             self.vert_data[key] = vertices[faces[key].reshape([-1])]
             self.n_vertices[key] = self.vert_data[key].shape[0]
             self.vertex_dim[key] = self.vert_data[key].shape[1]
@@ -158,25 +161,19 @@ class PRTRender(CamRender):
             glBindBuffer(GL_ARRAY_BUFFER, self.uv_buffer[key])
             glBufferData(GL_ARRAY_BUFFER, self.uv_data[key], GL_STATIC_DRAW)
 
-            self.norm_data[key] = np.asarray([])
-            if len(faces_nml[key].reshape([-1])):
-                self.norm_data[key] = norms[faces_nml[key].reshape([-1])]
+            self.norm_data[key] = norms[faces_nml[key].reshape([-1])]
             if key not in self.norm_buffer.keys():
                 self.norm_buffer[key] = glGenBuffers(1)
             glBindBuffer(GL_ARRAY_BUFFER, self.norm_buffer[key])
             glBufferData(GL_ARRAY_BUFFER, self.norm_data[key], GL_STATIC_DRAW)
 
-            self.tan_data[key] = np.asarray([])
-            if len(faces_nml[key].reshape([-1])):
-                self.tan_data[key] = tans[faces_nml[key].reshape([-1])]
+            self.tan_data[key] = tans[faces_nml[key].reshape([-1])]
             if key not in self.tan_buffer.keys():
                 self.tan_buffer[key] = glGenBuffers(1)
             glBindBuffer(GL_ARRAY_BUFFER, self.tan_buffer[key])
             glBufferData(GL_ARRAY_BUFFER, self.tan_data[key], GL_STATIC_DRAW)
 
-            self.btan_data[key] = np.asarray([])
-            if len(faces_nml[key].reshape([-1])):
-                self.btan_data[key] = bitans[faces_nml[key].reshape([-1])]
+            self.btan_data[key] = bitans[faces_nml[key].reshape([-1])]
             if key not in self.btan_buffer.keys():
                 self.btan_buffer[key] = glGenBuffers(1)
             glBindBuffer(GL_ARRAY_BUFFER, self.btan_buffer[key])
@@ -200,6 +197,7 @@ class PRTRender(CamRender):
             glBufferData(GL_ARRAY_BUFFER, self.prt3_data[key], GL_STATIC_DRAW)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
+        #print(self.vert_data)
 
     def cleanup(self):
         
@@ -278,7 +276,6 @@ class PRTRender(CamRender):
         for key in self.render_texture_mat:
             if 'AlbedoMap' in self.render_texture_mat[key]:
                 glUniform1ui(self.hasAlbedoUnif, GLuint(1))
-                break
             else:
                 glUniform1ui(self.hasAlbedoUnif, GLuint(0))
 
@@ -295,6 +292,7 @@ class PRTRender(CamRender):
         glUniformMatrix3fv(self.rot_mat_unif, 1, GL_FALSE, self.rot_matrix.transpose())
 
         for mat in self.vert_buffer:
+            # print(self.vertex_dim[mat])
             # Handle vertex buffer
             glBindBuffer(GL_ARRAY_BUFFER, self.vert_buffer[mat])
             glEnableVertexAttribArray(0)

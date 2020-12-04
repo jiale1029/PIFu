@@ -1,4 +1,13 @@
 # from data.config import raw_dataset, render_dataset, archive_dataset, model_list, zip_path
+import os
+import cv2
+import time
+import math
+import random
+import pyexr
+import argparse
+import shutil
+from tqdm import tqdm
 
 from lib.renderer.camera import Camera
 import numpy as np
@@ -9,14 +18,6 @@ from lib.renderer.mesh import (
     load_obj_mesh_mtl,
 )
 from lib.renderer.camera import Camera
-import os
-import cv2
-import time
-import math
-import random
-import pyexr
-import argparse
-from tqdm import tqdm
 
 
 def make_rotate(rx, ry, rz):
@@ -245,9 +246,12 @@ def render_prt_ortho(
     rndr_uv.set_norm_mat(y_scale, vmed)
 
     tan, bitan = compute_tangent(
-        vertices, faces, normals, textures, face_textures)
+        vertices, faces, normals, textures, face_textures
+    )
     prt = np.loadtxt(prt_file)
+    # Loads the triangles meshes from trimesh since order is not preserved
     face_prt = np.load(face_prt_file)
+    print(vertices.shape)
     if type == "nba":
         rndr.set_mesh_mtl(
             vertices=vertices,
@@ -258,7 +262,8 @@ def render_prt_ortho(
             faces_uvs=face_textures_data_mat,
             tans=tan,
             bitans=bitan,
-            prt=prt
+            prt=prt,
+            face_prt=face_prt
         )
         # set texture and their name
         for key in mtl_data:
@@ -270,7 +275,6 @@ def render_prt_ortho(
                 mat_name=key
             )
     else:
-        print("setting mesh")
         rndr.set_mesh(
             vertices,
             faces,
@@ -283,7 +287,6 @@ def render_prt_ortho(
             tan,
             bitan,
         )
-        # rndr.set_albedo(np.ones_like(texture_image)*255)
         rndr.set_albedo(texture_image)
 
     if type == "nba":
@@ -296,7 +299,8 @@ def render_prt_ortho(
             faces_uvs=face_textures_data_mat,
             tans=tan,
             bitans=bitan,
-            prt=prt
+            prt=prt,
+            face_prt=face_prt
         )
         # set texture and their name
         for key in mtl_data:
@@ -341,16 +345,20 @@ def render_prt_ortho(
     # copy obj file
     cmd = "cp %s %s" % (mesh_file, os.path.join(
         out_path, "GEO", "OBJ", subject_name))
-    #print(cmd)
     os.system(cmd)
+    # shutil.copyfile(
+    #     mesh_file,
+    #     os.path.join(out_path, "GEO", "OBJ", subject_name, mesh_file)
+    # )
 
     if type == "nba":
         # rename 0_person.obj to subject name
         src_path = os.path.join(
             out_path, "GEO", "OBJ", subject_name, "0_person.obj")
         dest_path = src_path.replace("0_person", subject_name)
-        cmd = f"mv {src_path} {dest_path}"
-        os.system(cmd)
+        shutil.copyfile(src_path, dest_path)
+        # cmd = f"mv {src_path} {dest_path}"
+        # os.system(cmd)
 
     for p in pitch:
         for y in tqdm(range(0, 360, angl_step)):
@@ -366,15 +374,6 @@ def render_prt_ortho(
             rndr.set_camera(cam)
             rndr_uv.set_camera(cam)
 
-            # out_all_f = rndr.get_color(0)
-            # out_mask = out_all_f[:, :, 3]
-            # out_all_f = cv2.cvtColor(out_all_f, cv2.COLOR_RGBA2BGR)
-            # cv2.imwrite(
-            #     os.path.join(
-            #         out_path, "RENDER", subject_name, "mesh.jpg"
-            #     ),
-            #     255.0 * out_all_f,
-            # )
             for j in range(n_light):
                 sh_id = random.randint(0, shs.shape[0] - 1)
                 sh = shs[sh_id]
@@ -390,7 +389,7 @@ def render_prt_ortho(
                 }
 
                 rndr.set_sh(sh)
-                rndr.analytic = False
+                rndr.analytic = True
                 rndr.use_inverse_depth = False
                 rndr.display()
 
@@ -420,8 +419,9 @@ def render_prt_ortho(
                     255.0 * out_mask,
                 )
 
+                # Draw the UV mapping here
                 rndr_uv.set_sh(sh)
-                rndr_uv.analytic = False
+                rndr_uv.analytic = True
                 rndr_uv.use_inverse_depth = False
                 rndr_uv.display()
 
@@ -501,8 +501,9 @@ if __name__ == "__main__":
     rndr = PRTRender(
         width=args.size, height=args.size, ms_rate=args.ms_rate, egl=args.egl
     )
-    rndr_uv = PRTRender(width=args.size, height=args.size,
-                        uv_mode=True, egl=args.egl)
+    rndr_uv = PRTRender(
+        width=args.size, height=args.size, uv_mode=True, egl=args.egl
+    )
 
     if args.input[-1] == "/":
         args.input = args.input[:-1]
