@@ -5,8 +5,13 @@ from .framework import *
 from .cam_render import CamRender
 
 class PRTRender(CamRender):
-    def __init__(self, width=1600, height=1200, name='PRT Renderer', uv_mode=False, ms_rate=1, egl=False):
-        program_files = ['prt.vs', 'prt.fs'] if not uv_mode else ['prt_uv.vs', 'prt_uv.fs']
+    def __init__(self, width=1600, height=1200, name='PRT Renderer', uv_mode=False,
+                 ms_rate=1, egl=False, type="rp"):
+        if type == "nba":
+            program_files = ['prt.vs', 'prt.fs'] if not uv_mode else ['prt_uv_nba.vs',
+                                                                      'prt_uv_nba.fs']
+        else:
+            program_files = ['prt.vs', 'prt.fs'] if not uv_mode else ['prt_uv.vs', 'prt_uv.fs']
         CamRender.__init__(self, width, height, name, program_files=program_files, color_size=8, ms_rate=ms_rate, egl=egl)
 
         # WARNING: this differs from vertex_buffer and vertex_data in Render
@@ -25,12 +30,15 @@ class PRTRender(CamRender):
         self.prt1_buffer = {}
         self.prt1_data = {}
         self.prt2_buffer = {}
-        self.prt2_data = {}        
+        self.prt2_data = {}
         self.prt3_buffer = {}
         self.prt3_data = {}
 
         self.uv_buffer = {}
         self.uv_data = {}
+
+        self.texoffset_data = {}
+        self.scale_data = {}
 
         self.render_texture_mat = {}
 
@@ -39,6 +47,12 @@ class PRTRender(CamRender):
 
         self.norm_mat_unif = glGetUniformLocation(self.program, 'NormMat')
         self.normalize_matrix = np.eye(4)
+
+        self.translate_mat_unif = glGetUniformLocation(self.program, 'TransMat')
+        self.translation_matrix = np.eye(4)
+
+        self.scale_mat_unif = glGetUniformLocation(self.program, 'ScaleMat')
+        self.scale_matrix = np.eye(4)
 
         self.shcoeff_unif = glGetUniformLocation(self.program, 'SHCoeffs')
         self.shcoeffs = np.zeros((9,3))
@@ -61,19 +75,25 @@ class PRTRender(CamRender):
         texture = np.flip(texture, 0)
         img_data = np.fromstring(texture.tostring(), np.uint8)
 
+        # add in this new texture to our buffer
         if mat_name not in self.render_texture_mat:
-            self.render_texture_mat[mat_name] = {} 
+            self.render_texture_mat[mat_name] = {}
         if smplr_name in self.render_texture_mat[mat_name].keys():
             glDeleteTextures([self.render_texture_mat[mat_name][smplr_name]])
             del self.render_texture_mat[mat_name][smplr_name]
+        # generate a buffer for this texture and set the current texture as active
         self.render_texture_mat[mat_name][smplr_name] = glGenTextures(1)
         glActiveTexture(GL_TEXTURE0)
-        
+
+        # how to unpack the pixels from image
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        # bind the texture to be a 2d texture
         glBindTexture(GL_TEXTURE_2D, self.render_texture_mat[mat_name][smplr_name])
 
+        # define how the image is like rgb etc.
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
-        
+
+        # define the parameters for the texture, how it should interpolate etc.
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 3)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
@@ -81,7 +101,7 @@ class PRTRender(CamRender):
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
 
         glGenerateMipmap(GL_TEXTURE_2D)
-        
+
     def set_albedo(self, texture_image, mat_name='all'):
         self.set_texture(mat_name, 'AlbedoMap', texture_image)
 
@@ -138,14 +158,13 @@ class PRTRender(CamRender):
         glBufferData(GL_ARRAY_BUFFER, self.prt2_data[mat_name], GL_STATIC_DRAW)
         glBindBuffer(GL_ARRAY_BUFFER, self.prt3_buffer[mat_name])
         glBufferData(GL_ARRAY_BUFFER, self.prt3_data[mat_name], GL_STATIC_DRAW)
-        
+
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-    def set_mesh_mtl(self, vertices, faces, norms, faces_nml, uvs, faces_uvs, tans, bitans, prt, face_prt):
+    def set_mesh_mtl(self, vertices, faces, norms, faces_nml, uvs, faces_uvs, tans,
+                     bitans, prt, face_prt, tex_offset={}, scale={}):
         for key in faces:
             # retrieve the vertices that combines into each faces
-            # print("starts here")
-            # print(faces[key].shape)
             self.vert_data[key] = vertices[faces[key].reshape([-1])]
             self.n_vertices[key] = self.vert_data[key].shape[0]
             self.vertex_dim[key] = self.vert_data[key].shape[1]
@@ -179,6 +198,9 @@ class PRTRender(CamRender):
             glBindBuffer(GL_ARRAY_BUFFER, self.btan_buffer[key])
             glBufferData(GL_ARRAY_BUFFER, self.btan_data[key], GL_STATIC_DRAW)
 
+            self.texoffset_data[key] = np.asarray(tex_offset.get(key, [[0, 0]]))
+            self.scale_data[key] = scale.get(key, 1)
+
             self.prt1_data[key] = prt[faces[key].reshape([-1])][:,:3]
             self.prt2_data[key] = prt[faces[key].reshape([-1])][:,3:6]
             self.prt3_data[key] = prt[faces[key].reshape([-1])][:,6:]
@@ -197,10 +219,9 @@ class PRTRender(CamRender):
             glBufferData(GL_ARRAY_BUFFER, self.prt3_data[key], GL_STATIC_DRAW)
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
-        #print(self.vert_data)
 
     def cleanup(self):
-        
+
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         for key in self.vert_data:
             glDeleteBuffers(1, [self.vert_buffer[key]])
@@ -242,11 +263,14 @@ class PRTRender(CamRender):
         self.uv_buffer = {}
         self.uv_data = {}
 
+        self.texoffset_data = {}
+        self.scale_data = {}
+
         self.render_texture_mat = {}
 
         self.vertex_dim = {}
         self.n_vertices = {}
-    
+
     def randomize_sh(self):
         self.shcoeffs[0,:] = 0.8
         self.shcoeffs[1:,:] = 1.0*np.random.rand(8,3)
@@ -261,6 +285,20 @@ class PRTRender(CamRender):
 
         self.normalize_matrix = N
 
+    def set_scale_mat(self, scale):
+        N = np.eye(4)
+        N[:3, :3] = scale*np.eye(3)
+
+        self.scale_matrix = N
+
+    def set_trans_mat(self, x, y, z):
+        N = np.eye(4)
+        N[3, 0] = x
+        N[3, 1] = y
+        N[3, 2] = z
+
+        self.translation_matrix = N
+
     def draw(self):
         self.draw_init()
 
@@ -269,30 +307,41 @@ class PRTRender(CamRender):
         glEnable(GL_MULTISAMPLE)
 
         glUseProgram(self.program)
-        glUniformMatrix4fv(self.norm_mat_unif, 1, GL_FALSE, self.normalize_matrix.transpose())
         glUniformMatrix4fv(self.model_mat_unif, 1, GL_FALSE, self.model_view_matrix.transpose())
         glUniformMatrix4fv(self.persp_mat_unif, 1, GL_FALSE, self.projection_matrix.transpose())
-
-        for key in self.render_texture_mat:
-            if 'AlbedoMap' in self.render_texture_mat[key]:
-                glUniform1ui(self.hasAlbedoUnif, GLuint(1))
-            else:
-                glUniform1ui(self.hasAlbedoUnif, GLuint(0))
-
-        for key in self.render_texture_mat:
-            if 'NormalMap' in self.render_texture_mat[key]:
-                glUniform1ui(self.hasNormalUnif, GLuint(1))
-            else:
-                glUniform1ui(self.hasNormalUnif, GLuint(0))
 
         glUniform1ui(self.analyticUnif, GLuint(1) if self.analytic else GLuint(0))
 
         glUniform3fv(self.shcoeff_unif, 9, self.shcoeffs)
 
         glUniformMatrix3fv(self.rot_mat_unif, 1, GL_FALSE, self.rot_matrix.transpose())
+        glUniformMatrix4fv(self.norm_mat_unif, 1, GL_FALSE, self.normalize_matrix.transpose())
 
-        for mat in self.vert_buffer:
-            # print(self.vertex_dim[mat])
+        # loop through different material and their vertices to draw
+        for i, mat in enumerate(self.vert_buffer):
+            if 'AlbedoMap' in self.render_texture_mat[mat]:
+                glUniform1ui(self.hasAlbedoUnif, GLuint(1))
+            else:
+                glUniform1ui(self.hasAlbedoUnif, GLuint(0))
+
+            if 'NormalMap' in self.render_texture_mat[mat]:
+                glUniform1ui(self.hasNormalUnif, GLuint(1))
+            else:
+                glUniform1ui(self.hasNormalUnif, GLuint(0))
+
+            # translate if passed in 
+            if mat in self.texoffset_data:
+                self.set_trans_mat(self.texoffset_data[mat][0][0],
+                                   self.texoffset_data[mat][0][1], 0)
+            glUniformMatrix4fv(self.translate_mat_unif, 1, GL_FALSE,
+                               self.translation_matrix.transpose())
+
+            # scale if passed in
+            if mat in self.scale_data:
+                self.set_scale_mat(self.scale_data[mat])
+            glUniformMatrix4fv(self.scale_mat_unif, 1, GL_FALSE,
+                               self.scale_matrix.transpose())
+
             # Handle vertex buffer
             glBindBuffer(GL_ARRAY_BUFFER, self.vert_buffer[mat])
             glEnableVertexAttribArray(0)
@@ -331,10 +380,10 @@ class PRTRender(CamRender):
             glEnableVertexAttribArray(7)
             glVertexAttribPointer(7, 3, GL_DOUBLE, GL_FALSE, 0, None)
 
-            for i, smplr in enumerate(self.render_texture_mat[mat]):
-                glActiveTexture(GL_TEXTURE0 + i)
-                glBindTexture(GL_TEXTURE_2D, self.render_texture_mat[mat][smplr])
-                glUniform1i(glGetUniformLocation(self.program, smplr), i)
+            smplr = 'AlbedoMap' if 'AlbedoMap' in self.render_texture_mat[mat] else 'NormalMap'
+            glActiveTexture(GL_TEXTURE0 + i)
+            glBindTexture(GL_TEXTURE_2D, self.render_texture_mat[mat][smplr])
+            glUniform1i(glGetUniformLocation(self.program, smplr), i)
 
             glDrawArrays(GL_TRIANGLES, 0, self.n_vertices[mat])
 

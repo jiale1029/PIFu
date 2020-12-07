@@ -20,11 +20,14 @@ out VertexData {
     vec3 PRT2;
     vec3 PRT3;
 } VertexOut;
+out vec2 abc;
 
 uniform mat3 RotMat;
 uniform mat4 NormMat;
 uniform mat4 ModelMat;
 uniform mat4 PerspMat;
+uniform mat4 TransMat;
+uniform mat4 ScaleMat;
 
 #define pi 3.1415926535897932384626433832795
 
@@ -162,6 +165,7 @@ void main()
     VertexOut.PRT2 = vec3(PRT1[2],PRT2[0],PRT2[1]);
     VertexOut.PRT3 = vec3(PRT2[2],PRT2[3],PRT2[4]);
 
+    // This setup is good for renderpeople and twindom, but not for NBA
     gl_Position = vec4(a_TextureCoord, 0.0, 1.0) - vec4(0.5, 0.5, 0, 0);
     gl_Position[0] *= 2.0;
     gl_Position[1] *= 2.0;

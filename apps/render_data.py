@@ -19,6 +19,34 @@ from lib.renderer.mesh import (
 )
 from lib.renderer.camera import Camera
 
+SCALE_MAPPING = {
+    "head.png": 1,
+    "arm.png": 1,
+    "shoe.png": 0.5,
+    "shirt.png": 1,
+    "eye.png": 0.125,
+    "tooth.png": 0.25,
+    "pant.png": 0.5,
+    "hair.png": 0.5,
+    "mane.png": 0.25,
+    "leg.png": 0.5,
+}
+
+TRANSLATION_MAPPING = {
+    "head.png": [[-1.0, 0.0]], # head
+    "arm.png": [[-1.0, -1.0]], # arm
+    "shoe.png_1": [[0.65, 0.3]], # shoe stripe 1
+    "shoe.png_2": [[0.48, -0.225]], # shoe
+    "shoe.png_3": [[0.40, 0.3]], # shoe stripe 2
+    "shoe.png_4": [[0.48, -1.0]], # shoe
+    "shirt.png": [[0.0, 0.25]], # shirt
+    "eye.png": [[-0.125, -0.125]], # eye
+    "tooth.png": [[-0.09, -0.425]], # tooth
+    "pant.png": [[0.0625, -0.125]], # pant
+    "hair.png": [[0.175, -0.425]], # hair
+    "mane.png": [[0.7, -0.48]], # mane
+    "leg.png": [[-0.04, -1.0]], # leg
+}
 
 def make_rotate(rx, ry, rz):
 
@@ -210,6 +238,7 @@ def render_prt_ortho(
     texture_image = cv2.imread(text_file)
     texture_image = cv2.cvtColor(texture_image, cv2.COLOR_BGR2RGB)
 
+    # nba dataset load from mtl file
     if type == "nba":
         (
             vertices,
@@ -221,7 +250,7 @@ def render_prt_ortho(
             face_data_mat,
             face_norm_data_mat,
             face_textures_data_mat,
-            mtl_data 
+            mtl_data
         ) = load_obj_mesh_mtl(mesh_file)
     else:
         (
@@ -251,7 +280,11 @@ def render_prt_ortho(
     prt = np.loadtxt(prt_file)
     # Loads the triangles meshes from trimesh since order is not preserved
     face_prt = np.load(face_prt_file)
-    print(vertices.shape)
+
+    # scale and translation for nba
+    scale_data = {}
+    translation_data = {}
+
     if type == "nba":
         rndr.set_mesh_mtl(
             vertices=vertices,
@@ -274,6 +307,17 @@ def render_prt_ortho(
                 texture_image=texture_image,
                 mat_name=key
             )
+            cnt = 1
+            # e.g. '../../textures/head.png'
+            material_name = mtl_data[key]['map_Kd'].split("/")[-1]
+            if 'shoe' not in mtl_data[key]['map_Kd']:
+                translation_data[key] = TRANSLATION_MAPPING[material_name]
+            else:
+                translation_data[key] = TRANSLATION_MAPPING[material_name + f'_{cnt}']
+                cnt += 1
+            scale_data[key] = SCALE_MAPPING[material_name]
+        print(scale_data)
+        print(translation_data)
     else:
         rndr.set_mesh(
             vertices,
@@ -300,7 +344,39 @@ def render_prt_ortho(
             tans=tan,
             bitans=bitan,
             prt=prt,
-            face_prt=face_prt
+            face_prt=face_prt,
+            tex_offset=translation_data,
+            scale=scale_data
+            # tex_offset={
+            #     "material_0": [[-1.0, 0.0]], # head
+            #     "material_1": [[-1.0, -1.0]], # arm
+            #     "material_2": [[0.65, 0.3]], # shoe stripe 1
+            #     "material_3": [[0.48, -0.225]], # shoe
+            #     "material_4": [[0.40, 0.3]], # shoe stripe 2
+            #     "material_5": [[0.48, -1.0]], # shoe
+            #     "material_6": [[0.0, 0.25]], # shirt
+            #     "material_7": [[-0.125, -0.125]], # eye
+            #     "material_8": [[-0.09, -0.425]], # tooth
+            #     "material_9": [[0.0625, -0.125]], # pant
+            #     "material_10": [[0.175, -0.425]], # hair
+            #     "material_11": [[0.7, -0.48]], # mane
+            #     "material_12": [[-0.04, -1.0]], # leg
+            # },
+            # scale={
+            #     "material_0": 1,
+            #     "material_1": 1,
+            #     "material_2": 0.5,
+            #     "material_3": 0.5,
+            #     "material_4": 0.5,
+            #     "material_5": 0.5,
+            #     "material_6": 1,
+            #     "material_7": 0.125,
+            #     "material_8": 0.25,
+            #     "material_9": 0.5,
+            #     "material_10": 0.5,
+            #     "material_11": 0.25,
+            #     "material_12": 0.5,
+            # }
         )
         # set texture and their name
         for key in mtl_data:
@@ -357,8 +433,6 @@ def render_prt_ortho(
             out_path, "GEO", "OBJ", subject_name, "0_person.obj")
         dest_path = src_path.replace("0_person", subject_name)
         shutil.copyfile(src_path, dest_path)
-        # cmd = f"mv {src_path} {dest_path}"
-        # os.system(cmd)
 
     for p in pitch:
         for y in tqdm(range(0, 360, angl_step)):
@@ -496,15 +570,6 @@ if __name__ == "__main__":
 
     initialize_GL_context(width=args.size, height=args.size, egl=args.egl)
 
-    from lib.renderer.gl.prt_render import PRTRender
-
-    rndr = PRTRender(
-        width=args.size, height=args.size, ms_rate=args.ms_rate, egl=args.egl
-    )
-    rndr_uv = PRTRender(
-        width=args.size, height=args.size, uv_mode=True, egl=args.egl
-    )
-
     if args.input[-1] == "/":
         args.input = args.input[:-1]
 
@@ -525,6 +590,15 @@ if __name__ == "__main__":
         frame_type = input.split("/")[-3]
         frame = input.split("/")[-2]
         subject_name = player_name + "_" + frame_type + "_" + frame
+
+    from lib.renderer.gl.prt_render import PRTRender
+
+    rndr = PRTRender(
+        width=args.size, height=args.size, ms_rate=args.ms_rate, egl=args.egl, type=args.type
+    )
+    rndr_uv = PRTRender(
+        width=args.size, height=args.size, uv_mode=True, egl=args.egl, type=args.type
+    )
 
     render_prt_ortho(
         args.out_dir,
