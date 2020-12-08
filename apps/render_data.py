@@ -1,4 +1,4 @@
-# from data.config import raw_dataset, render_dataset, archive_dataset, model_list, zip_path
+#from data.config import raw_dataset, render_dataset, archive_dataset, model_list, zip_path
 import os
 import cv2
 import time
@@ -20,32 +20,34 @@ from lib.renderer.mesh import (
 from lib.renderer.camera import Camera
 
 SCALE_MAPPING = {
-    "head.png": 1,
-    "arm.png": 1,
-    "shoe.png": 0.5,
-    "shirt.png": 1,
-    "eye.png": 0.125,
-    "tooth.png": 0.25,
-    "pant.png": 0.5,
-    "hair.png": 0.5,
-    "mane.png": 0.25,
-    "leg.png": 0.5,
+    "head.png": 0.75,
+    "arm.png": 0.75,
+    "shoe.png": 0.375,
+    "shirt.png": 0.75,
+    "eye.png": 0.09375,
+    "tooth.png": 0.1875,
+    "pant.png": 0.375,
+    "hair.png": 0.375,
+    "mane.png": 0.1875,
+    "leg.png": 0.375,
+    "beard.png": 0.375
 }
 
 TRANSLATION_MAPPING = {
-    "head.png": [[-1.0, 0.0]], # head
+    "head.png": [[-0.38, 0.00]], # head
     "arm.png": [[-1.0, -1.0]], # arm
-    "shoe.png_1": [[0.65, 0.3]], # shoe stripe 1
+    "shoe.png_1": [[0.5, 0.5]], # shoe stripe 1
     "shoe.png_2": [[0.48, -0.225]], # shoe
-    "shoe.png_3": [[0.40, 0.3]], # shoe stripe 2
-    "shoe.png_4": [[0.48, -1.0]], # shoe
-    "shirt.png": [[0.0, 0.25]], # shirt
-    "eye.png": [[-0.125, -0.125]], # eye
-    "tooth.png": [[-0.09, -0.425]], # tooth
-    "pant.png": [[0.0625, -0.125]], # pant
-    "hair.png": [[0.175, -0.425]], # hair
-    "mane.png": [[0.7, -0.48]], # mane
-    "leg.png": [[-0.04, -1.0]], # leg
+    "shoe.png_3": [[0.0, 0.3]], # shoe stripe 2
+    "shoe.png_4": [[0.0, -1.0]], # shoe
+    "shirt.png": [[0.2, -1.05]], # shirt
+    "eye.png": [[-0.95, 0.3]], # eye
+    "tooth.png": [[-0.95, -0.2]], # tooth
+    "pant.png": [[-0.95, 0.4]], # pant
+    "hair.png": [[0.5, -0.205]], # hair
+    "mane.png": [[-0.25, -0.48]], # mane
+    "leg.png": [[-0.25, -0.95]], # leg
+    "beard.png": [[-0.71, -0.18]] # beard
 }
 
 def make_rotate(rx, ry, rz):

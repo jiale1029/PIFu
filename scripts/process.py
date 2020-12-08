@@ -68,32 +68,33 @@ if type == "nba":
         f.writelines([line + '\n' for line in player_2ku_dirs])
 
     # run prt_util
-    try:
-        cmds = []
-        for data_dir in tqdm(player_rest_dirs+player_2ku_dirs):
-            cmd = (
-                "python -m apps.prt_util -i"
-                f" {data_dir}"
-                " -t nba"
-            )
-            cmds.append(cmd)
-        p = multiprocessing.Pool(multiprocessing.cpu_count())
-        print(p.map(work, cmds))
-    except Exception as e:
-        print(f"{e}: {data_dir}")
+    # try:
+    #     cmds = []
+    #     for data_dir in tqdm(player_rest_dirs+player_2ku_dirs):
+    #         cmd = (
+    #             "python -m apps.prt_util -i"
+    #             f" {data_dir}"
+    #             " -t nba"
+    #         )
+    #         cmds.append(cmd)
+    #     p = multiprocessing.Pool(multiprocessing.cpu_count())
+    #     print(p.map(work, cmds))
+    # except Exception as e:
+    #     print(f"{e}: {data_dir}")
 
     # run render_data
     try:
-        dst_path = os.path.join(output_dir, 'rest_pose')
+        # dst_path = os.path.join(output_dir, 'rest_pose')
+        # cmds = []
+        # for data_dir in tqdm(player_rest_dirs):
+        #     cmd = (
+        #         "python -m apps.render_data -i"
+        #         f" {data_dir}"
+        #         f" -o {dst_path}"
+        #         " -t nba -e"
+        #     )
+        #     cmds.append(cmd)
         cmds = []
-        for data_dir in tqdm(player_rest_dirs):
-            cmd = (
-                "python -m apps.render_data -i"
-                f" {data_dir}"
-                f" -o {dst_path}"
-                " -t nba -e"
-            )
-            cmds.append(cmd)
         dst_path = os.path.join(output_dir, '2ku')
         for data_dir in tqdm(player_2ku_dirs):
             cmd = (
@@ -103,7 +104,7 @@ if type == "nba":
                 " -t nba -e"
             )
             cmds.append(cmd)
-        p = multiprocessing.Pool(multiprocessing.cpu_count())
+        p = multiprocessing.Pool(multiprocessing.cpu_count()//2)
         print(p.map(work, cmds))
     except Exception as e:
         print(f"{e}: {data_dir}")
