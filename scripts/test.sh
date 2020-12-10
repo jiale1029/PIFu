@@ -4,7 +4,7 @@ set -ex
 # Training
 GPU_ID=1
 DISPLAY_ID=$((GPU_ID*10+10))
-NAME='NBA_rest_pose'
+NAME='pifu_demo'
 
 # Network configuration
 
@@ -16,8 +16,8 @@ MLP_DIM_COLOR='513 1024 512 256 128 3'
 # NOTE: one can change here to reconstruct mesh in a different resolution.
 VOL_RES=256
 
-CHECKPOINTS_NETG_PATH="./checkpoints/${NAME}/netG_latest"
-CHECKPOINTS_NETC_PATH='./checkpoints/net_C'
+CHECKPOINTS_NETG_PATH="./checkpoints/netG_latest"
+CHECKPOINTS_NETC_PATH='./checkpoints/netC_latest'
 
 TEST_FOLDER_PATH='./sample_images'
 

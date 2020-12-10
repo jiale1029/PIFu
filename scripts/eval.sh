@@ -4,7 +4,7 @@ set -ex
 # Training
 GPU_ID=1
 DISPLAY_ID=$((GPU_ID*10+10))
-NAME='TWINDOM'
+NAME='NBA_rp_twindom'
 
 # Network configuration
 
@@ -18,6 +18,7 @@ VOL_RES=256
 
 CHECKPOINTS_NETG_PATH="./checkpoints/${NAME}/netG_latest"
 CHECKPOINTS_NETC_PATH="./checkpoints/${NAME}/netC_latest"
+CHECKPOINTS_NETC_PATH="./checkpoints/net_C"
 
 TEST_FOLDER_PATH="./eval/image"
 RESULT_FOLDER_PATH="./eval/result"
