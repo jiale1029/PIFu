@@ -5,11 +5,14 @@ set -ex
 GPU_ID=1
 
 # Network configuration
-TRAINING_DATA_PATH="/home/tanjiale/PIFu/data/training_data"
+TRAINING_DATA_PATH="/home/tanjiale/pifu/training_data/nba_dataset/rest_pose"
 BATCH_SIZE=4
-NUM_EPOCH=150
+NUM_EPOCH=250
 LR=0.001
-name="TWINDOM"
+name="NBA_rest_pose"
+
+# Training configuration
+NO_GEN_MESH=False # Generate meshes during the training for debugging
 
 # command
 CUDA_VISIBLE_DEVICES=${GPU_ID} python -m apps.train_shape \
@@ -18,6 +21,7 @@ CUDA_VISIBLE_DEVICES=${GPU_ID} python -m apps.train_shape \
     --batch_size ${BATCH_SIZE} \
     --num_epoch ${NUM_EPOCH} \
     --learning_rate ${LR} \
+    --no_gen_mesh ${NO_GEN_MESH} \
     --random_flip \
     --random_scale \
     --random_trans && \

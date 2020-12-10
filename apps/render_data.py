@@ -211,7 +211,7 @@ def render_prt_ortho(
     elif type == "twindom":
         mesh_file = os.path.join(folder_name, subject_name + ".obj")
         for file in os.listdir(folder_name):
-            if ".png" in file:
+            if ".png" in file or ".jpg" in file:
                 text_name = file
                 break
         text_file = os.path.join(folder_name, text_name)

@@ -25,7 +25,8 @@ def load_trimesh(root_dir):
             )
         else:
             meshs[sub_name] = trimesh.load(
-                os.path.join(root_dir, f, "%s.obj" % sub_name)
+                os.path.join(root_dir, f, "%s.obj" % sub_name),
+                force='mesh'
             )
 
     return meshs

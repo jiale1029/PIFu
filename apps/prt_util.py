@@ -192,14 +192,17 @@ def testPRT(dir_path, type, n=40):
         sub_name = dir_path.split("/")[-1][:-4]
         obj_path = os.path.join(dir_path, sub_name + "_100k.obj")
     elif type == "twindom":
+        obj_file = None
         for file in os.listdir(dir_path):
             if ".obj" in file:
                 obj_file = file
                 prefix = obj_file.split(".obj")[0]
                 break
+        if obj_file is None:
+            raise TypeError(f"{dir_path} doesn't contain a obj file.")
         for file in os.listdir(dir_path):
             # twindom dataset doesn't have matching png file sometimes
-            if prefix not in file:
+            if os.path.isfile(file) and prefix not in file:
                 raise ValueError(f"Invalid prefix type for file {file}")
         obj_path = os.path.join(dir_path, obj_file)
     elif type == "nba":

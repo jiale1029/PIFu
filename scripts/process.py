@@ -84,19 +84,9 @@ if type == "nba":
 
     # run render_data
     try:
-        # dst_path = os.path.join(output_dir, 'rest_pose')
-        # cmds = []
-        # for data_dir in tqdm(player_rest_dirs):
-        #     cmd = (
-        #         "python -m apps.render_data -i"
-        #         f" {data_dir}"
-        #         f" -o {dst_path}"
-        #         " -t nba -e"
-        #     )
-        #     cmds.append(cmd)
+        dst_path = os.path.join(output_dir, 'rest_pose')
         cmds = []
-        dst_path = os.path.join(output_dir, '2ku')
-        for data_dir in tqdm(player_2ku_dirs):
+        for data_dir in tqdm(player_rest_dirs):
             cmd = (
                 "python -m apps.render_data -i"
                 f" {data_dir}"
@@ -104,14 +94,73 @@ if type == "nba":
                 " -t nba -e"
             )
             cmds.append(cmd)
-        p = multiprocessing.Pool(multiprocessing.cpu_count()//2)
-        print(p.map(work, cmds))
+        # cmds = []
+        # dst_path = os.path.join(output_dir, '2ku')
+        # for data_dir in tqdm(player_2ku_dirs):
+        #     cmd = (
+        #         "python -m apps.render_data -i"
+        #         f" {data_dir}"
+        #         f" -o {dst_path}"
+        #         " -t nba -e"
+        #     )
+        #     cmds.append(cmd)
     except Exception as e:
         print(f"{e}: {data_dir}")
 
 elif type == "rp":
-    print("rp")
+    # prt_util
+    cmds = []
+    for data_dir in tqdm(os.listdir(input_dir)):
+        data_dir = os.path.join(input_dir, data_dir)
+        cmd = (
+            "python -m apps.prt_util -i"
+            f" {data_dir}"
+            f" -t {type}"
+        )
+        cmds.append(cmd)
+    p = multiprocessing.Pool(multiprocessing.cpu_count())
+    print(p.map(work, cmds))
+    # render_data
+    dst_path = output_dir
+    cmds = []
+    for data_dir in os.listdir(input_dir):
+        data_dir = os.path.join(input_dir, data_dir)
+        cmd = (
+            "python -m apps.render_data -i"
+            f" {data_dir}"
+            f" -o {dst_path}"
+            f" -t {type} -e"
+        )
+        cmds.append(cmd)
 elif type == "twindom":
-    print("twindom")
+    # prt_util
+    cmds = []
+    for data_dir in tqdm(os.listdir(input_dir)):
+        data_dir = os.path.join(input_dir, data_dir)
+        cmd = (
+            "python -m apps.prt_util -i"
+            f" {data_dir}"
+            f" -t {type}"
+        )
+        cmds.append(cmd)
+    print(cmds)
+    p = multiprocessing.Pool(multiprocessing.cpu_count())
+    print(p.map(work, cmds))
+    # render_data
+    dst_path = output_dir
+    cmds = []
+    for data_dir in os.listdir(input_dir):
+        data_dir = os.path.join(input_dir, data_dir)
+        cmd = (
+            "python -m apps.render_data -i"
+            f" {data_dir}"
+            f" -o {dst_path}"
+            f" -t {type} -e"
+        )
+        cmds.append(cmd)
 else:
     raise ValueError("Dataset type is currently not supported yet")
+
+print(cmds)
+p = multiprocessing.Pool(multiprocessing.cpu_count()//2)
+print(p.map(work, cmds))
