@@ -327,7 +327,7 @@ class TrainDataset(Dataset):
             1,
         )
 
-        # save_samples_truncted_prob('out.ply', samples.T, labels.T)
+        save_samples_truncted_prob('out.ply', samples.T, labels.T)
         # exit()
 
         samples = torch.Tensor(samples).float()
