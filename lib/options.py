@@ -32,7 +32,7 @@ class BaseOptions():
         g_train.add_argument('--serial_batches', action='store_true',
                              help='if true, takes images in order to make batches, otherwise takes them randomly')
         g_train.add_argument('--pin_memory', action='store_true', help='pin_memory')
-        
+
         g_train.add_argument('--batch_size', type=int, default=2, help='input batch size')
         g_train.add_argument('--learning_rate', type=float, default=1e-3, help='adam learning rate')
         g_train.add_argument('--learning_rateC', type=float, default=1e-3, help='adam learning rate')
@@ -41,10 +41,10 @@ class BaseOptions():
         g_train.add_argument('--freq_plot', type=int, default=10, help='freqency of the error plot')
         g_train.add_argument('--freq_save', type=int, default=50, help='freqency of the save_checkpoints')
         g_train.add_argument('--freq_save_ply', type=int, default=100, help='freqency of the save ply')
-       
+
         g_train.add_argument('--no_gen_mesh', action='store_true')
         g_train.add_argument('--no_num_eval', action='store_true')
-        
+
         g_train.add_argument('--resume_epoch', type=int, default=-1, help='epoch resuming the training')
         g_train.add_argument('--continue_train', action='store_true', help='continue training: load the latest model')
 
@@ -91,7 +91,8 @@ class BaseOptions():
         parser.add_argument('--random_trans', action='store_true', help='if random flip')
         parser.add_argument('--random_scale', action='store_true', help='if random flip')
         parser.add_argument('--no_residual', action='store_true', help='no skip connection in mlp')
-        parser.add_argument('--schedule', type=int, nargs='+', default=[60, 80],
+        parser.add_argument('--schedule', type=int, nargs='+', default=[30,60, 80, 120,
+                                                                        150, 180, 210],
                             help='Decrease learning rate at these epochs.')
         parser.add_argument('--gamma', type=float, default=0.1, help='LR is multiplied by gamma on schedule.')
         parser.add_argument('--color_loss_type', type=str, default='l1', help='mse | l1')
