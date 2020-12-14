@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from lib.renderer.camera import Camera
 import numpy as np
+import trimesh
 from lib.renderer.mesh import (
     load_obj_mesh,
     compute_tangent,
@@ -49,6 +50,19 @@ TRANSLATION_MAPPING = {
     "leg.png": [[-0.25, -0.95]], # leg
     "beard.png": [[-0.71, -0.18]] # beard
 }
+
+def center_normalize_mesh(mesh):
+    extents = mesh.extents
+    vmin = mesh.vertices.min(0)
+    vmax = mesh.vertices.max(0)
+    center = 0.5 * (vmin+vmax)
+
+    m = trimesh.transformations.translation_matrix(-center)
+    meshPre = mesh.apply_transform(m)
+    m = trimesh.transformations.scale_matrix(1/np.max(extents))
+    mesh = meshPre.apply_transform(m)
+
+    return mesh
 
 def make_rotate(rx, ry, rz):
 
@@ -189,6 +203,7 @@ def render_prt_ortho(
     folder_name,
     type,
     subject_name,
+    normalized,
     shs,
     rndr,
     rndr_uv,
@@ -349,36 +364,6 @@ def render_prt_ortho(
             face_prt=face_prt,
             tex_offset=translation_data,
             scale=scale_data
-            # tex_offset={
-            #     "material_0": [[-1.0, 0.0]], # head
-            #     "material_1": [[-1.0, -1.0]], # arm
-            #     "material_2": [[0.65, 0.3]], # shoe stripe 1
-            #     "material_3": [[0.48, -0.225]], # shoe
-            #     "material_4": [[0.40, 0.3]], # shoe stripe 2
-            #     "material_5": [[0.48, -1.0]], # shoe
-            #     "material_6": [[0.0, 0.25]], # shirt
-            #     "material_7": [[-0.125, -0.125]], # eye
-            #     "material_8": [[-0.09, -0.425]], # tooth
-            #     "material_9": [[0.0625, -0.125]], # pant
-            #     "material_10": [[0.175, -0.425]], # hair
-            #     "material_11": [[0.7, -0.48]], # mane
-            #     "material_12": [[-0.04, -1.0]], # leg
-            # },
-            # scale={
-            #     "material_0": 1,
-            #     "material_1": 1,
-            #     "material_2": 0.5,
-            #     "material_3": 0.5,
-            #     "material_4": 0.5,
-            #     "material_5": 0.5,
-            #     "material_6": 1,
-            #     "material_7": 0.125,
-            #     "material_8": 0.25,
-            #     "material_9": 0.5,
-            #     "material_10": 0.5,
-            #     "material_11": 0.25,
-            #     "material_12": 0.5,
-            # }
         )
         # set texture and their name
         for key in mtl_data:
@@ -420,14 +405,18 @@ def render_prt_ortho(
         f = open(os.path.join(out_path, "val.txt"), "w")
         f.close()
 
+    if not normalized:
     # copy obj file
-    cmd = "cp %s %s" % (mesh_file, os.path.join(
-        out_path, "GEO", "OBJ", subject_name))
-    os.system(cmd)
-    # shutil.copyfile(
-    #     mesh_file,
-    #     os.path.join(out_path, "GEO", "OBJ", subject_name, mesh_file)
-    # )
+        cmd = "cp %s %s" % (mesh_file, os.path.join(
+          out_path, "GEO", "OBJ", subject_name))
+        os.system(cmd)
+    else:
+        obj_name = mesh_file.split("/")[-1]
+        mesh = trimesh.load(mesh_file, process=False, force="mesh", skip_materials=True)
+        mesh = center_normalize_mesh(mesh)
+
+        with open(os.path.join(out_path, "GEO", "OBJ", subject_name, obj_name), "w") as f:
+            mesh.export(f, "obj")
 
     if type == "nba":
         # rename 0_person.obj to subject name
@@ -548,6 +537,9 @@ if __name__ == "__main__":
         "-o", "--out_dir", type=str, default="/home/shunsuke/Documents/hf_human"
     )
     parser.add_argument(
+        "-n", "--normalized", action="store_true"
+    )
+    parser.add_argument(
         "-m",
         "--ms_rate",
         type=int,
@@ -607,6 +599,7 @@ if __name__ == "__main__":
         args.input,
         args.type,
         subject_name,
+        args.normalized,
         shs,
         rndr,
         rndr_uv,
