@@ -2,31 +2,37 @@
 set -ex
 
 # Training
-GPU_ID=1
+GPU_ID=0
 
 # Network configuration
-TRAINING_DATA_PATH="/home/tanjiale/pifu/training_data/rp_twindom/"
+# TRAINING_DATA_PATH="/home/tanjiale/pifu/training_data/rp_twindom"
+# TRAINING_DATA_PATH="/home/tanjiale/pifu/training_data/rp_dataset"
+TRAINING_DATA_PATH="/home/tanjiale/pifu/training_data/nba_dataset/rest_pose"
 BATCH_SIZE=4
-NUM_EPOCH=150
+NUM_EPOCH=200
 LR=0.001
-name="NBA_rp_twindom"
+name="nba_rest_pose_normalized"
 
 # Training configuration
+nba_sigma=0.005
+twindom_sigma=5
+rp_sigma=0.005
 
 # command
-CUDA_VISIBLE_DEVICES=${GPU_ID} python -m apps.train_shape \
+python -m apps.train_shape \
+    --gpu_id ${GPU_ID} \
     --name ${name} \
     --dataroot ${TRAINING_DATA_PATH} \
     --batch_size ${BATCH_SIZE} \
     --num_epoch ${NUM_EPOCH} \
     --learning_rate ${LR} \
-    --no_gen_mesh \
-    --debug \
+    --sigma ${nba_sigma} \
     --random_flip \
     --random_scale \
     --random_trans && \
-    CUDA_VISIBLE_DEVICES=${GPU_ID} python -m apps.train_color \
+    python -m apps.train_color \
     --name ${name} \
+    --gpu_id ${GPU_ID} \
     --dataroot ${TRAINING_DATA_PATH} \
     --batch_size ${BATCH_SIZE} \
     --num_epoch ${NUM_EPOCH} \
