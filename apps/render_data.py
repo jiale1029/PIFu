@@ -288,6 +288,7 @@ def render_prt_ortho(
     vmed[up_axis] = 0.5 * (vmax[up_axis] + vmin[up_axis])
     y_scale = 180 / (vmax[up_axis] - vmin[up_axis])
 
+    # set the scaling for the subject
     rndr.set_norm_mat(y_scale, vmed)
     rndr_uv.set_norm_mat(y_scale, vmed)
 
@@ -326,6 +327,7 @@ def render_prt_ortho(
             )
             cnt = 1
             # e.g. '../../textures/head.png'
+            # there's multiple shoes in nba dataset
             material_name = mtl_data[key]['map_Kd'].split("/")[-1]
             if 'shoe' not in mtl_data[key]['map_Kd']:
                 translation_data[key] = TRANSLATION_MAPPING[material_name]
@@ -333,8 +335,6 @@ def render_prt_ortho(
                 translation_data[key] = TRANSLATION_MAPPING[material_name + f'_{cnt}']
                 cnt += 1
             scale_data[key] = SCALE_MAPPING[material_name]
-        print(scale_data)
-        print(translation_data)
     else:
         rndr.set_mesh(
             vertices,
@@ -406,11 +406,11 @@ def render_prt_ortho(
         f.close()
 
     if not normalized:
-    # copy obj file
+        # copy obj file
         cmd = "cp %s %s" % (mesh_file, os.path.join(
           out_path, "GEO", "OBJ", subject_name))
         os.system(cmd)
-    else:
+    else: # don't use this
         obj_name = mesh_file.split("/")[-1]
         mesh = trimesh.load(mesh_file, process=False, force="mesh", skip_materials=True)
         mesh = center_normalize_mesh(mesh)
@@ -427,6 +427,7 @@ def render_prt_ortho(
 
     for p in pitch:
         for y in tqdm(range(0, 360, angl_step)):
+            # rotation matrix for the subject
             R = np.matmul(
                 make_rotate(math.radians(p), 0, 0), make_rotate(
                     0, math.radians(y), 0)
