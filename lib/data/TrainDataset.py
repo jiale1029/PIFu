@@ -78,8 +78,10 @@ class TrainDataset(Dataset):
         self.UV_POS = os.path.join(self.root, "UV_POS")
         self.OBJ = os.path.join(self.root, "GEO", "OBJ")
 
-        self.B_MIN = np.array([-128, -28, -128])
-        self.B_MAX = np.array([128, 228, 128])
+        # self.B_MIN = np.array([-128, -28, -128])
+        # self.B_MAX = np.array([128, 228, 128])
+        self.B_MIN = np.array([-1.5, -0.2, -1.5])
+        self.B_MAX = np.array([1.5, 1.25, 1.5])
 
         self.is_train = phase == "train"
         self.load_size = self.opt.loadSize
@@ -286,10 +288,12 @@ class TrainDataset(Dataset):
             random.seed(1991)
             np.random.seed(1991)
             torch.manual_seed(1991)
+
         mesh = self.mesh_dic[subject]
         surface_points, _ = trimesh.sample.sample_surface(
             mesh, 4 * self.num_sample_inout
         )
+
         sample_points = surface_points + np.random.normal(
             scale=self.opt.sigma, size=surface_points.shape
         )
@@ -327,7 +331,7 @@ class TrainDataset(Dataset):
             1,
         )
 
-        save_samples_truncted_prob('out.ply', samples.T, labels.T)
+        save_samples_truncted_prob(f'intermediate_results/out_{subject}.ply', samples.T, labels.T)
         # exit()
 
         samples = torch.Tensor(samples).float()
