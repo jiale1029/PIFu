@@ -91,8 +91,8 @@ class BaseOptions():
         parser.add_argument('--random_trans', action='store_true', help='if random flip')
         parser.add_argument('--random_scale', action='store_true', help='if random flip')
         parser.add_argument('--no_residual', action='store_true', help='no skip connection in mlp')
-        parser.add_argument('--schedule', type=int, nargs='+', default=[30, 60, 80, 120,
-                                                                        150, 180, 210],
+        parser.add_argument('--schedule', type=int, nargs='+', default=[15, 23, 30, 38,
+                                                                        50, 60, 210],
                             help='Decrease learning rate at these epochs.')
         parser.add_argument('--gamma', type=float, default=0.1, help='LR is multiplied by gamma on schedule.')
         parser.add_argument('--color_loss_type', type=str, default='l1', help='mse | l1')
