@@ -109,17 +109,17 @@ if type == "nba":
 
 elif type == "rp":
     # prt_util
-    cmds = []
-    for data_dir in tqdm(os.listdir(input_dir)):
-        data_dir = os.path.join(input_dir, data_dir)
-        cmd = (
-            "python -m apps.prt_util -i"
-            f" {data_dir}"
-            f" -t {type}"
-        )
-        cmds.append(cmd)
-    p = multiprocessing.Pool(multiprocessing.cpu_count())
-    print(p.map(work, cmds))
+    # cmds = []
+    # for data_dir in tqdm(os.listdir(input_dir)):
+    #     data_dir = os.path.join(input_dir, data_dir)
+    #     cmd = (
+    #         "python -m apps.prt_util -i"
+    #         f" {data_dir}"
+    #         f" -t {type}"
+    #     )
+    #     cmds.append(cmd)
+    # p = multiprocessing.Pool(multiprocessing.cpu_count())
+    # print(p.map(work, cmds))
     # render_data
     dst_path = output_dir
     cmds = []
